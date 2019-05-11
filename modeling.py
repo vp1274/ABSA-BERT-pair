@@ -394,7 +394,14 @@ class BertForSequenceClassification(nn.Module):
 
         if labels is not None:
             loss_fct = CrossEntropyLoss()
-            loss = loss_fct(logits, labels)
+            num_classes = 12
+            loss_fn = torch.nn.BCEWithLogitsLoss(pos_weight=torch.ones([num_classes])).cuda()
+            #logits_onehot = torch.cuda.FloatTensor(logits.size()[0], num_classes).zero_()
+            #logits_onehot = logits_onehot.scatter_(1, logits.long().data, 1)
+            labels_onehot = torch.cuda.FloatTensor(labels.size()[0], num_classes).zero_()
+            labels_onehot = labels_onehot.scatter_(1, labels.long().data, 1)
+            loss = loss_fn(logits, labels_onehot)
+            loss = torch.autograd.Variable(loss,requires_grad=True)
             return loss, logits
         else:
             return logits
