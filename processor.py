@@ -81,7 +81,8 @@ class Sentihood_single_Processor(DataProcessor):
 
     def get_labels(self):
         """See base class."""
-        return ['None', 'Positive', 'Negative']
+        #return ['None', 'Positive', 'Negative']
+        return ['general-None','price-None','safety-None','transit-None','general-Positive','price-Positive','safety-Positive','transit-Positive','general-Negative','price-Negative','safety-Negative','transit-Negative']
 
     def _create_examples(self, lines, set_type):
         """Creates examples for the training and dev sets."""
@@ -90,14 +91,17 @@ class Sentihood_single_Processor(DataProcessor):
           #  if i>50:break
             guid = "%s-%s" % (set_type, i)
             text_a = tokenization.convert_to_unicode(str(line[1]))
-            label = tokenization.convert_to_unicode(str(line[2]))
+            labels = []
+            for j in range(2,len(line)):
+                label = tokenization.convert_to_unicode(str(line[j]))
+                labels.append(label)
             if i%1000==0:
                 print(i)
                 print("guid=",guid)
                 print("text_a=",text_a)
-                print("label=",label)
+                print("labels=",labels)
             examples.append(
-                InputExample(guid=guid, text_a=text_a, text_b=None, label=label))
+                InputExample(guid=guid, text_a=text_a, text_b=None, label=labels))
         return examples
 
         

@@ -45,7 +45,6 @@ class InputFeatures(object):
 
 def convert_examples_to_features(examples, label_list, max_seq_length, tokenizer):
     """Loads a data file into a list of `InputBatch`s."""
-
     label_map = {}
     for (i, label) in enumerate(label_list):
         label_map[label] = i
@@ -119,8 +118,7 @@ def convert_examples_to_features(examples, label_list, max_seq_length, tokenizer
         assert len(input_mask) == max_seq_length
         assert len(segment_ids) == max_seq_length
 
-        label_id = label_map[example.label]
-
+        label_id = [label_map[label] for label in example.label]
         features.append(
                 InputFeatures(
                         input_ids=input_ids,
@@ -415,7 +413,11 @@ def main():
                     logits = F.softmax(logits, dim=-1)
                     logits = logits.detach().cpu().numpy()
                     label_ids = label_ids.to('cpu').numpy()
-                    outputs = np.argmax(logits, axis=1)
+                    #outputs = np.argmax(logits, axis=1)
+                    outputs= np.argmax(np.reshape(logits,(3,4)).transpose()
+                    transform = lambda x:4*x
+                    outputs = transform(outputs)
+                    print(outputs)                    	
                     for output_i in range(len(outputs)):
                         f_test.write(str(outputs[output_i]))
                         for ou in logits[output_i]:
