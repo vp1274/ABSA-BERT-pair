@@ -2,6 +2,13 @@ import os
 
 from data_utils_sentihood import *
 
+import argparse
+parser = argparse.ArgumentParser()
+parser.add_argument("context_window", help="context_window",
+                    type=int)
+args = parser.parse_args()
+context_size = args.context_window
+
 data_dir='../data/sentihood/'
 aspect2idx = {
     'general': 0,
@@ -25,8 +32,9 @@ if not os.path.exists(dir_path):
     os.makedirs(dir_path)
 
 sentiments=["None","Positive","Negative"]
+sub_dir = "{}/".format(context_size)
 def write_NLI_B(filename, data):
-    with open(dir_path+filename,"w",encoding="utf-8") as f:
+    with open(dir_path+sub_dir+filename,"w",encoding="utf-8") as f:
         f.write("id\tsentence1\tsentence2\tlabel\n")
         for v in data:
             for sentiment in sentiments:
@@ -36,25 +44,36 @@ def write_NLI_B(filename, data):
                 elif word=='location2':f.write('location - 2')
                 elif word[0]=='\'':f.write("\' "+word[1:])
                 else:f.write(word)
+                loc_index = 0
                 for i in range(1,len(v[1])):
                     word=v[1][i].lower()
                     f.write(" ")
                     if word == 'location1':
                         f.write('location - 1')
+                        if v[2] == 'LOCATION1':
+                            loc_index = i
                     elif word == 'location2':
                         f.write('location - 2')
+                        if v[2] == 'LOCATION2':
+                            loc_index = i
                     elif word[0] == '\'':
                         f.write("\' " + word[1:])
                     else:
                         f.write(word)
                 f.write("\t")
                 f.write(sentiment+" - ")
-                if v[2]=='LOCATION1':f.write('location - 1 - ')
-                if v[2]=='LOCATION2':f.write('location - 2 - ')
                 if len(v[3])==1:    
-                    f.write(v[3][0]+"\t")
+                    f.write(v[3][0]+" - ")
                 else:
-                    f.write("transit location\t")
+                    f.write("transit location - ")
+                for d in range(-1*context_size, context_size+1):
+                    if d != 0 and loc_index + d >= 0 and loc_index + d < len(v[1]):
+                        f.write(v[1][loc_index + d])
+                        f.write(" ")
+                    elif d == 0:
+                        if v[2]=='LOCATION1':f.write('location - 1 ')
+                        if v[2]=='LOCATION2':f.write('location - 2 ')
+                f.write("\t")
                 if v[4]==sentiment:
                     f.write("1\n")
                 else:
@@ -67,7 +86,7 @@ write_NLI_B("test_NLI_B.tsv", test)
     
 
 def write_QA_B(filename, data):            
-    with open(dir_path+filename,"w",encoding="utf-8") as f:
+    with open(dir_path+sub_dir+filename,"w",encoding="utf-8") as f:
         f.write("id\tsentence1\tsentence2\tlabel\n")
         for v in data:
             for sentiment in sentiments:
@@ -77,13 +96,18 @@ def write_QA_B(filename, data):
                 elif word=='location2':f.write('location - 2')
                 elif word[0]=='\'':f.write("\' "+word[1:])
                 else:f.write(word)
+                loc_index = 0
                 for i in range(1,len(v[1])):
                     word=v[1][i].lower()
                     f.write(" ")
                     if word == 'location1':
                         f.write('location - 1')
+                        if v[2] == 'LOCATION1':
+                            loc_index = i
                     elif word == 'location2':
                         f.write('location - 2')
+                        if v[2] == 'LOCATION2':
+                            loc_index = i
                     elif word[0] == '\'':
                         f.write("\' " + word[1:])
                     else:
@@ -91,11 +115,16 @@ def write_QA_B(filename, data):
                 f.write("\t")
                 f.write("the polarity of the aspect ")
                 if len(v[3])==1:
-                    f.write(v[3][0])
+                    f.write(v[3][0] + " ")
                 else:
-                    f.write("transit location")
-                if v[2]=='LOCATION1':f.write(' of location - 1 - is ')
-                if v[2]=='LOCATION2':f.write(' of location - 2 - is ')
+                    f.write("transit location ")
+                for d in range(-1*context_size, context_size+1):
+                    if d != 0 and loc_index + d >= 0 and loc_index + d < len(v[1]):
+                        f.write(v[1][loc_index + d])
+                        f.write(" ")
+                    elif d == 0:
+                        if v[2]=='LOCATION1':f.write('of location - 1 - is ')
+                        if v[2]=='LOCATION2':f.write('of location - 2 - is ')
                 f.write(sentiment+" .\t")
                 if v[4]==sentiment:
                     f.write("1\n")
