@@ -1,3 +1,4 @@
+
 # coding=utf-8
 
 # Reference: https://github.com/huggingface/pytorch-pretrained-BERT
@@ -395,13 +396,50 @@ class BertForSequenceClassification(nn.Module):
         if labels is not None:
             loss_fct = CrossEntropyLoss()
             num_classes = 12
-            loss_fn = torch.nn.BCEWithLogitsLoss(pos_weight=torch.ones([num_classes])).cuda()
+            #print((torch.squeeze(torch.index_select(labels,1,torch.cuda.LongTensor([0])).cuda())/4.0).shape)
+            logits_sliced= torch.index_select(logits,1,torch.cuda.LongTensor([0,4,8])).cuda()
+            labels_sliced= torch.squeeze(torch.index_select(labels,1,torch.cuda.LongTensor([0])).cuda())
+            labels_mapped= torch.div(labels_sliced,4.0)
+            #print(logits_sliced.shape)
+            #print(labels_mapped.shape)
+            if labels_mapped.dim()==0:
+                labels_mapped = torch.unsqueeze(labels_mapped,0)
+            loss1=loss_fct(logits_sliced,labels_mapped)
+            logits_sliced= torch.index_select(logits,1,torch.cuda.LongTensor([1,5,9])).cuda()
+            labels_sliced= torch.squeeze(torch.index_select(labels,1,torch.cuda.LongTensor([1])).cuda())
+            labels_sliced=torch.add(labels_sliced,-1)
+            labels_mapped= torch.div(labels_sliced,4.0)
+            if labels_mapped.dim()==0:
+                labels_mapped = torch.unsqueeze(labels_mapped,0)
+            loss2=loss_fct(logits_sliced,labels_mapped)
+            logits_sliced= torch.index_select(logits,1,torch.cuda.LongTensor([2,6,10])).cuda()
+            labels_sliced= torch.squeeze(torch.index_select(labels,1,torch.cuda.LongTensor([2])).cuda())
+       	    labels_sliced=torch.add(labels_sliced,-2)
+       	    labels_mapped= torch.div(labels_sliced,4.0)
+       	    if labels_mapped.dim()==0:
+                labels_mapped = torch.unsqueeze(labels_mapped,0)
+            loss3=loss_fct(logits_sliced,labels_mapped)
+            logits_sliced= torch.index_select(logits,1,torch.cuda.LongTensor([3,7,11])).cuda()
+            labels_sliced= torch.squeeze(torch.index_select(labels,1,torch.cuda.LongTensor([3])).cuda())
+       	    labels_sliced=torch.add(labels_sliced,-3)
+       	    labels_mapped= torch.div(labels_sliced,4.0)
+       	    if labels_mapped.dim()==0:
+                labels_mapped = torch.unsqueeze(labels_mapped,0)
+            loss4=loss_fct(logits_sliced,labels_mapped)
+            loss=loss1+loss2+loss3+loss4
+            loss=torch.div(loss,4.0)
+            #loss=loss_fct(torch.index_select(logits,1,torch.cuda.LongTensor([0,4,8])).cuda(),torch.div((torch.squeeze(torch.index_select(labels,1,torch.cuda.LongTensor([0])).cuda())),4.0))
+            #loss+=loss_fct(torch.index_select(logits,1,torch.cuda.LongTensor([1,5,9])).cuda(),(torch.squeeze(torch.index_select(labels,1,torch.cuda.LongTensor([1])).cuda())-1)/4.0)
+            #loss+=loss_fct(torch.index_select(logits,1,torch.cuda.LongTensor([2,6,10])).cuda(),(torch.squeeze(torch.index_select(labels,1,torch.cuda.LongTensor([2])).cuda())-2)/4.0)
+            #loss+=loss_fct(torch.index_select(logits,1,torch.cuda.LongTensor([3,7,11])).cuda(),(torch.squeeze(torch.index_select(labels,1,torch.cuda.LongTensor([3])).cuda())-3)/4.0)
+            #loss/=4.0
+            #loss_fn = torch.nn.BCEWithLogitsLoss(pos_weight=torch.ones([num_classes])).cuda()
             #logits_onehot = torch.cuda.FloatTensor(logits.size()[0], num_classes).zero_()
             #logits_onehot = logits_onehot.scatter_(1, logits.long().data, 1)
-            labels_onehot = torch.cuda.FloatTensor(labels.size()[0], num_classes).zero_()
-            labels_onehot = labels_onehot.scatter_(1, labels.long().data, 1)
-            loss = loss_fn(logits, labels_onehot)
-            loss = torch.autograd.Variable(loss,requires_grad=True)
+            #labels_onehot = torch.cuda.FloatTensor(labels.size()[0], num_classes).zero_()
+            #labels_onehot = labels_onehot.scatter_(1, labels.long().data, 1)
+            #loss = loss_fn(logits, labels_onehot)
+            #loss = torch.autograd.Variable(loss,requires_grad=True)
             return loss, logits
         else:
             return logits

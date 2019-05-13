@@ -1,3 +1,4 @@
+
 # coding=utf-8
 
 """BERT finetuning runner."""
@@ -411,19 +412,36 @@ def main():
                         tmp_test_loss, logits = model(input_ids, segment_ids, input_mask, label_ids)
 
                     logits = F.softmax(logits, dim=-1)
+                    #logits = F.sigmoid(logits)
                     logits = logits.detach().cpu().numpy()
                     label_ids = label_ids.to('cpu').numpy()
                     #outputs = np.argmax(logits, axis=1)
-                    outputs= np.argmax(np.reshape(logits,(3,4)).transpose()
-                    transform = lambda x:4*x
+                    (num_examples,_)=logits.shape
+                    tmp_test_accuracy=0.0
+                    for i1 in range(num_examples):
+                        l1=np.argmax([logits[i1][0],logits[i1][4],logits[i1][8]])*4
+                        l2=np.argmax([logits[i1][1],logits[i1][5],logits[i1][9]])*4+1
+                        l3=np.argmax([logits[i1][2],logits[i1][6],logits[i1][10]])*4+2
+                        l4=np.argmax([logits[i1][3],logits[i1][7],logits[i1][11]])*4+3
+                        label_classes=label_ids[i1]
+                        l=[l1,l2,l3,l4]
+                        print("*******")
+                        print(label_classes)
+                        print(logits[i1])
+                        for ll in l:
+                            if ll in label_classes:
+                                tmp_test_accuracy+=0.25       
+                    """outputs= np.argmax(np.swapaxes(np.reshape(logits,(logits.shape[0],3,4)),1,2),axis=2)
+                    transform = np.vectorize(lambda x: 4*x)
                     outputs = transform(outputs)
+                    
                     print(outputs)                    	
                     for output_i in range(len(outputs)):
                         f_test.write(str(outputs[output_i]))
                         for ou in logits[output_i]:
                             f_test.write(" "+str(ou))
                         f_test.write("\n")
-                    tmp_test_accuracy=np.sum(outputs == label_ids)
+                    tmp_test_accuracy=np.sum(outputs == label_ids)"""
 
                     test_loss += tmp_test_loss.mean().item()
                     test_accuracy += tmp_test_accuracy
