@@ -59,7 +59,11 @@ def load_vocab(vocab_file):
     """Loads a vocabulary file into a dictionary."""
     vocab = collections.OrderedDict()
     index = 0
+<<<<<<< HEAD
+    with open(vocab_file, "r") as reader:
+=======
     with open(vocab_file, "r", encoding="utf-8") as reader:
+>>>>>>> 0a3a02295ba89c7f0b0311d0743db9cb7395c5f9
         while True:
             token = convert_to_unicode(reader.readline())
             if not token:
